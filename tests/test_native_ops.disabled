@@ -1,0 +1,30 @@
+# Test Script for NativeOps (User-Mode Kernel Info)
+$ErrorActionPreference = "Stop"
+
+# 1. Import Module
+Write-Host "Importing NativeOps module..." -ForegroundColor Cyan
+Import-Module "$PSScriptRoot\..\engine\kernel\NativeOps.psm1" -Force
+
+# 2. Execute Command
+Write-Host "Retrieving Process List via NTAPI (ntdll.dll)..." -ForegroundColor Cyan
+try {
+    $processes = Get-NativeProcessList
+    
+    # 3. Analyze Output
+    $count = $processes.Count
+    Write-Host "Successfully retrieved $count processes." -ForegroundColor Green
+    
+    # Show Top 5 by Thread Count
+    Write-Host "`nTop 5 Processes by Thread Count:" -ForegroundColor Yellow
+    $processes | Sort-Object Threads -Descending | Select-Object -First 5 PID, Name, Threads, Handles, SessionId | Format-Table -AutoSize
+    
+    # Show specific system process (PID 4 or similar)
+    $systemProc = $processes | Where-Object { $_.PID -eq 4 }
+    if ($systemProc) {
+        Write-Host "System Process (PID 4) Details:" -ForegroundColor Yellow
+        $systemProc | Format-List
+    }
+}
+catch {
+    Write-Error "Test Failed: $_"
+}

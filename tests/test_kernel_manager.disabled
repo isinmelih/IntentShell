@@ -1,0 +1,47 @@
+# Test Script for Kernel Driver Manager & SystemCore Internal Delegation
+$ErrorActionPreference = "Stop"
+Start-Transcript -Path "$PSScriptRoot\test_kernel_log.txt" -Force
+
+try {
+    $projectRoot = Resolve-Path "$PSScriptRoot\.."
+    $env:PSModulePath = "$projectRoot\engine\modules;$env:PSModulePath"
+
+    Write-Host "--- Loading SystemCore ---" -ForegroundColor Cyan
+    Import-Module "$projectRoot\engine\modules\SystemCore.psm1" -Force
+    Import-Module "$projectRoot\engine\modules\KernelDriverManager.psm1" -Force
+
+    Write-Host "--- Testing Enable-KernelDriver ---" -ForegroundColor Cyan
+    try {
+        Enable-KernelDriver
+        Write-Host "✅ Enable-KernelDriver executed." -ForegroundColor Green
+    } catch {
+        Write-Error "❌ Enable-KernelDriver failed: $_"
+    }
+
+    Write-Host "--- Testing Get-RealProcessPath (Self PID: $pid) ---" -ForegroundColor Cyan
+    try {
+        $path = Get-RealProcessPath -Pid $pid
+        # The result might be wrapped in ModuleResult if called directly via Run, 
+        # but Enable-KernelDriver calls RequestExecution which returns ModuleResult.
+        # Wait, Get-RealProcessPath calls RequestExecution which returns ModuleResult.
+        
+        Write-Host "Raw Result Type: $($path.GetType().FullName)"
+        
+        if ($path.Success) {
+             Write-Host "✅ Path Retrieved: $($path.Data)" -ForegroundColor Green
+        } else {
+             Write-Warning "⚠️ Path retrieval failed/empty. Message: $($path.Message)"
+        }
+    } catch {
+        Write-Error "❌ Get-RealProcessPath failed: $_"
+    }
+
+    Write-Host "--- Inspecting Decision History ---" -ForegroundColor Cyan
+    [SystemCore]::DecisionHistory | Format-Table Intent, Decision, Reason -AutoSize
+}
+catch {
+    Write-Error "Critical Test Failure: $_"
+}
+finally {
+    Stop-Transcript
+}

@@ -1,0 +1,64 @@
+# Test Script for Kernel Driver Manager Gate Logic
+$ErrorActionPreference = "Continue"
+Start-Transcript -Path "$PSScriptRoot\test_gate_log.txt" -Force
+
+try {
+    $projectRoot = Resolve-Path "$PSScriptRoot\.."
+    $env:PSModulePath = "$projectRoot\engine\modules;$env:PSModulePath"
+
+    Write-Host "--- Loading SystemCore & KernelManager ---" -ForegroundColor Cyan
+    Import-Module "$projectRoot\engine\modules\SystemCore.psm1" -Force
+    Import-Module "$projectRoot\engine\modules\KernelDriverManager.psm1" -Force
+
+    Write-Host "`nTEST 1: Try Enable-KernelDriver WITHOUT enabling Experimental Mode (Should Fail)" -ForegroundColor Yellow
+    
+    # Ensure it's disabled initially
+    [SystemCore]::DisableExperimentalKernelMode() 
+    
+    try {
+        Enable-KernelDriver
+        Write-Host "❌ FAILED: Enable-KernelDriver executed despite mode being disabled." -ForegroundColor Red
+    } catch {
+        # We expect it to fail, but Enable-KernelDriver calls SystemCore which returns ModuleResult.
+        # It throws only if we explicitly throw.
+        # Wait, Enable-KernelDriver is a function wrapper. Let's see how it behaves.
+        # If RequestExecution returns false, what does Enable-KernelDriver do?
+        Write-Host "Caught Exception: $_"
+    }
+    
+    # Check DecisionHistory for BLOCKED
+    $lastDecision = [SystemCore]::DecisionHistory | Select-Object -Last 1
+    if ($lastDecision.Decision -eq "BLOCKED") {
+        Write-Host "✅ PASSED: SystemCore Blocked the request." -ForegroundColor Green
+        Write-Host "   Reason: $($lastDecision.Reason)" -ForegroundColor Gray
+    } else {
+        Write-Host "❌ FAILED: SystemCore did not block. Decision: $($lastDecision.Decision)" -ForegroundColor Red
+    }
+
+    Write-Host "`nTEST 2: Enable Experimental Mode manually via SystemCore" -ForegroundColor Yellow
+    [SystemCore]::EnableExperimentalKernelMode()
+
+    Write-Host "`nTEST 3: Try Enable-KernelDriver WITH Experimental Mode (Should Pass)" -ForegroundColor Yellow
+    try {
+        Enable-KernelDriver
+        Write-Host "✅ PASSED: Enable-KernelDriver executed successfully." -ForegroundColor Green
+    } catch {
+        Write-Error "❌ FAILED: Enable-KernelDriver failed even with mode enabled: $_"
+    }
+    
+    $lastDecision = [SystemCore]::DecisionHistory | Select-Object -Last 1
+    if ($lastDecision.Decision -eq "EXECUTED") {
+        Write-Host "✅ PASSED: SystemCore Executed the request." -ForegroundColor Green
+    } else {
+        Write-Host "❌ FAILED: SystemCore did not execute. Decision: $($lastDecision.Decision)" -ForegroundColor Red
+    }
+
+    Write-Host "`nTEST 4: Inspect Decision History" -ForegroundColor Cyan
+    [SystemCore]::DecisionHistory | Format-Table Intent, Decision, Reason -AutoSize
+}
+catch {
+    Write-Error "Critical Test Error: $_"
+}
+finally {
+    Stop-Transcript
+}

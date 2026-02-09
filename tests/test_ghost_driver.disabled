@@ -1,0 +1,33 @@
+# Test Script for Ghost Driver (Direct Memory Access)
+$ErrorActionPreference = "Stop"
+
+Write-Host "Loading Ghost Driver (C# Injection)..." -ForegroundColor Cyan
+Import-Module "$PSScriptRoot\..\engine\kernel\GhostDriver.psm1" -Force
+
+# 1. Target a Safe Process (Notepad if exists, otherwise current PowerShell)
+$targetProc = Get-Process -Name "notepad" -ErrorAction SilentlyContinue | Select-Object -First 1
+
+if (-not $targetProc) {
+    Write-Host "Notepad not found, targeting current PowerShell process..." -ForegroundColor Yellow
+    $targetProc = Get-Process -Id $PID
+}
+
+Write-Host "Target PID: $($targetProc.Id) ($($targetProc.ProcessName))" -ForegroundColor Green
+
+# 2. Test Path Retrieval (via OpenProcess + GetModuleFileNameEx)
+$path = Get-GhostPath -Pid $targetProc.Id
+Write-Host "Real Path (Ghost): $path" -ForegroundColor White
+
+# 3. Test Memory Read (Reading PE Header at Base Address)
+Write-Host "Attempting to read Process Memory (PE Header)..." -ForegroundColor Cyan
+$hexDump = Invoke-GhostRead -Pid $targetProc.Id -Address 0 -Size 16
+
+Write-Host "Memory Dump (First 16 bytes):" -ForegroundColor Yellow
+Write-Host $hexDump
+
+# Check for "MZ" signature (4D 5A)
+if ($hexDump -match "4D 5A") {
+    Write-Host "SUCCESS: Valid DOS Header (MZ) detected in memory!" -ForegroundColor Green
+} else {
+    Write-Host "WARNING: Could not verify MZ signature (Access might be restricted or ASLR shifted)" -ForegroundColor Red
+}
