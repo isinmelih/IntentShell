@@ -205,6 +205,11 @@ IntentShell is designed with production-level resilience.
 
 ---
 
+## Status
+
+⚠️ This project is under active development and currently in an experimental/testing phase.
+APIs, Security System, behaviors, and modules may change.
+
 ## Getting Started
 
 ### Requirements
