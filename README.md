@@ -8,6 +8,8 @@
 This is **not** a simple text-to-command tool.  
 IntentShell is a living runtime environment that can reason about actions, learn from past behavior
 (Intent DNA), self-correct on failure, and inspect every execution step.
+IntentShell is **not** an LLM-centric assistant.
+It is a native module-centric system where users directly control, extend, and master PowerShell operations.
 
 ---
 
@@ -103,7 +105,7 @@ The journey from intent to reality:
 
 IntentShell follows the principle:
 
-> **"Code is open, policy is signed."**
+> **"Code is always open"**
 
 ### Core vs Policy Separation
 
@@ -111,19 +113,12 @@ IntentShell follows the principle:
   Open-source execution engine.  
   Executes commands but does **not** decide what is safe.
 
-- **Policy File (Custom Signed License)**  
-  Digitally signed rule set (Ed25519) defining:
-  - prohibited commands
-  - allowed contexts
-  - cache and learning behavior  
-
-  Signature is stored in Base64 format (`policy.sig`).
-
-- **Cache System**  
-  Adaptive learning is enabled only when the policy signature is valid.  
-  Signature failure forces **Restricted Mode**.
-
 ---
+
+### User Macros
+
+
+IntentShell introduces command reduction via `#variablename`, allowing complex multi-step commands to be executed using a single, human-friendly keyword.
 
 ### Kernel Mode Notice
 
@@ -242,7 +237,7 @@ License:
 
 Code: Apache 2.0 / MIT
 
-Policy: Custom Signed License
+Policy: Safety Always Wins!
 
 Author: You
 
