@@ -59,7 +59,7 @@ The question *“Why did this command work yesterday but fail today?”* is no l
 IntentShell evolves with you.
 
 - **Learning**  
-  Frequently used intents and parameters are stored in the Intent DNA database.
+  Frequently used intents and parameters are stored in the memory.
 
 - **Adaptation**  
   When you say *“clean logs”*, the system gradually learns your project-specific log directories.
