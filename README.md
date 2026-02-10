@@ -236,7 +236,7 @@ Example Commands
 "Switch to creative mode" → FlowState & CreativeStudio
 
 Project Status
-Version: v1.0.0 (Stable)
+Version: v1.0.0 (Not Stable)
 
 License:
 
